@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
@@ -62,6 +65,9 @@
      </item>
      <item>
       <widget class="QListWidget" name="listWidget">
+       <property name="contextMenuPolicy">
+        <enum>Qt::CustomContextMenu</enum>
+       </property>
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
@@ -135,8 +141,8 @@
    <slot>BrowseBtn_click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>655</x>
-     <y>131</y>
+     <x>656</x>
+     <y>168</y>
     </hint>
     <hint type="destinationlabel">
      <x>661</x>
@@ -144,9 +150,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>OutBtn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>OutBtnClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>646</x>
+     <y>218</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>647</x>
+     <y>245</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>show_message_click()</slot>
-  <slot>BrowseBtn_click()</slot>
+  <slot>BrowseBtnClick()</slot>
+  <slot>OutBtnClick()</slot>
  </slots>
 </ui>
