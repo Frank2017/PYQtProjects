@@ -1,4 +1,4 @@
-# coding=UTF-8
+# -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'first_qt.ui'
 #
@@ -8,12 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
-        self.MainWindow = MainWindow
+        MainWindow.setStyleSheet("")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
@@ -39,6 +38,7 @@ class Ui_MainWindow(object):
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_2.addWidget(self.label_2)
         self.listWidget = QtWidgets.QListWidget(self.horizontalLayoutWidget_2)
+        self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.listWidget.setObjectName("listWidget")
         self.horizontalLayout_2.addWidget(self.listWidget)
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
@@ -69,9 +69,9 @@ class Ui_MainWindow(object):
         self.menuFile.addSeparator()
         self.menuBar.addAction(self.menuFile.menuAction())
 
-        # 控制分离需要将以下UI事件监听设置注释掉
         # self.retranslateUi(MainWindow)
-        # self.BrowseBtn.clicked.connect(Controller.BrowseBtn_click)
+        # self.BrowseBtn.clicked.connect(MainWindow.BrowseBtn_click)
+        # self.OutBtn.clicked.connect(MainWindow.OutBtnClick)
         # QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -86,6 +86,4 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "file"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionClose.setText(_translate("MainWindow", "Close"))
-
-
 
