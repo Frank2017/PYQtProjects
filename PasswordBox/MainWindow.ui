@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>828</width>
-    <height>604</height>
+    <width>847</width>
+    <height>641</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>202</width>
+      <width>226</width>
       <height>581</height>
      </rect>
     </property>
@@ -28,17 +28,71 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QPushButton" name="AddPswBooksBtn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>100</horstretch>
+           <verstretch>30</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>添加密码本</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+         <property name="default">
+          <bool>false</bool>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="DeleteMultiPswBooksBtn">
+        <widget class="QPushButton" name="DeletePswBooksBtn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>100</horstretch>
+           <verstretch>30</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>删除密码本</string>
          </property>
         </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QPushButton" name="ExportExcelBtn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>100</horstretch>
+           <verstretch>30</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>导出密码本</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>107</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>
@@ -77,12 +131,30 @@
        </property>
       </widget>
      </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QPushButton" name="PswBooksSelectAllBtn">
+         <property name="text">
+          <string>全选</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PswBooksClearBtn">
+         <property name="text">
+          <string>清除</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
    </widget>
    <widget class="QWidget" name="horizontalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>240</x>
       <y>10</y>
       <width>591</width>
       <height>41</height>
@@ -121,7 +193,7 @@
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>240</x>
       <y>60</y>
       <width>591</width>
       <height>531</height>
@@ -131,17 +203,44 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
+        <widget class="QPushButton" name="PswSelectAllBtn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>80</horstretch>
+           <verstretch>25</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>全选</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PswClearAllBtn">
+         <property name="text">
+          <string>反选</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>40</width>
+           <width>100</width>
            <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PswBooksCloseBtn">
+         <property name="text">
+          <string>关闭密码本</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="AddPswBtn">
@@ -190,6 +289,9 @@
        <property name="autoFillBackground">
         <bool>true</bool>
        </property>
+       <property name="styleSheet">
+        <string notr="true">border-color: rgb(0, 0, 0);</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::WinPanel</enum>
        </property>
@@ -227,7 +329,7 @@
         <bool>false</bool>
        </attribute>
        <attribute name="verticalHeaderStretchLastSection">
-        <bool>true</bool>
+        <bool>false</bool>
        </attribute>
        <column>
         <property name="text">
@@ -245,9 +347,9 @@
         </property>
         <property name="background">
          <color>
-          <red>229</red>
+          <red>79</red>
           <green>229</green>
-          <blue>229</blue>
+          <blue>224</blue>
          </color>
         </property>
         <property name="foreground">
@@ -262,7 +364,7 @@
        </column>
        <column>
         <property name="text">
-         <string>项目名</string>
+         <string>应用名</string>
         </property>
         <property name="font">
          <font>
@@ -284,11 +386,11 @@
        </column>
        <column>
         <property name="text">
-         <string>密码</string>
+         <string>用户名</string>
         </property>
         <property name="font">
          <font>
-          <family>Century Schoolbook L</family>
+          <family>思源黑体</family>
           <weight>75</weight>
           <bold>true</bold>
          </font>
@@ -298,9 +400,9 @@
         </property>
         <property name="background">
          <color>
-          <red>163</red>
-          <green>248</green>
-          <blue>168</blue>
+          <red>243</red>
+          <green>244</green>
+          <blue>163</blue>
          </color>
         </property>
        </column>
@@ -308,7 +410,33 @@
      </item>
     </layout>
    </widget>
+   <zorder>verticalLayoutWidget</zorder>
+   <zorder>horizontalLayoutWidget_2</zorder>
+   <zorder>verticalLayoutWidget_2</zorder>
+   <zorder>PswList</zorder>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>847</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="funcMenu">
+    <property name="title">
+     <string>菜单</string>
+    </property>
+    <addaction name="ImportExcelMenu"/>
+   </widget>
+   <addaction name="funcMenu"/>
+  </widget>
+  <action name="ImportExcelMenu">
+   <property name="text">
+    <string>导入</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
