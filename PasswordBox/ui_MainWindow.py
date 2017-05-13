@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(847, 641)
+        MainWindow.resize(847, 641)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
@@ -201,9 +201,9 @@ class Ui_MainWindow(object):
         self.funcMenu = QtWidgets.QMenu(self.menuBar)
         self.funcMenu.setObjectName("funcMenu")
         MainWindow.setMenuBar(self.menuBar)
-        self.ImportExcelMenu = QtWidgets.QAction(MainWindow)
-        self.ImportExcelMenu.setObjectName("ImportExcelMenu")
-        self.funcMenu.addAction(self.ImportExcelMenu)
+        self.ImportExcelAction = QtWidgets.QAction(MainWindow)
+        self.ImportExcelAction.setObjectName("ImportExcelAction")
+        self.funcMenu.addAction(self.ImportExcelAction)
         self.menuBar.addAction(self.funcMenu.menuAction())
 
         # self.retranslateUi(MainWindow)
@@ -234,5 +234,5 @@ class Ui_MainWindow(object):
         item = self.PswList.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "用户名"))
         self.funcMenu.setTitle(_translate("MainWindow", "菜单"))
-        self.ImportExcelMenu.setText(_translate("MainWindow", "导入"))
+        self.ImportExcelAction.setText(_translate("MainWindow", "导入"))
 
