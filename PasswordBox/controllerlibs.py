@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from ui_MainWindow import Ui_MainWindow
 import filemodel as FM
 import funclibs
-from redefineModel import AddBookDialog, EditBookPswDialog
+from redefineModel import *
 
 class Controller(QMainWindow,Ui_MainWindow):
     def __init__(self):
@@ -29,7 +29,7 @@ class Controller(QMainWindow,Ui_MainWindow):
         self.PswClearAllBtn.clicked.connect(self.ClearAllSelectedPassword)
         self.PswBooksCloseBtn.clicked.connect(self.CloseCurPasswordBooks)
         self.AddPswBtn.clicked.connect(self.AddPassword)
-        self.DeletePswBtn.clicked.connect(self.DeletePassword)
+        self.DeletePswBtn.clicked.connect(self.DeleteSelectedPassword)
 
         # # 为menu绑定动作
         self.ImportExcelAction.triggered.connect(self.ImportExcelMenuFunc)
@@ -40,8 +40,10 @@ class Controller(QMainWindow,Ui_MainWindow):
         # # 为PswBooksList右键菜单绑定动作
         self.PswBooksList.customContextMenuRequested[QtCore.QPoint].connect(self.PswBooksListContext)
         # # 为PswList添加单机双击事件
-
+        self.PswList.clicked.connect(self.PswListClick)
+        self.PswList.doubleClicked.connect(self.PswListDouClick)
         # # 为PswList添加右键菜单
+        self.PswList.customContextMenuRequested[QtCore.QPoint].connect(self.PswListContext)
 
         # 初始化filemodel进行存储
         self.filemodel = FM.FileModel()
@@ -49,6 +51,24 @@ class Controller(QMainWindow,Ui_MainWindow):
             QtWidgets.QMessageBox.information(u'错误', u'初始化失败')
             sys.exit(0)
         self.PswBooksManageVer = self.filemodel.getPswBooksManage()
+        self.PasswordDictVer = {}
+        self.CurOpenPswBookName = ''
+        self.CurOpenPswBookNameMD5 = ''
+
+        # 初始化将一些按钮点击功能禁止
+        if self.CurOpenPswBookName == '':
+            # self.PswSelectAllBtn.setEnabled(False)
+            # self.PswClearAllBtn.setEnabled(False)
+            self.PswBooksCloseBtn.setEnabled(False)
+            self.AddPswBtn.setEnabled(False)
+            # self.DeletePswBtn.setEnabled(False)
+        # if len(self.PswBooksManageVer) == 0:
+        #     self.DeletePswBooksBtn.setEnabled(False)
+        #     self.ExportExcelBtn.setEnabled(False)
+        #     self.PswBooksSelectAllBtn.setEnabled(False)
+        #     self.PswBooksClearBtn.setEnabled(False)
+
+
         # print self.PswBooksManage
         # 将slot和signal进行绑定
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -89,9 +109,6 @@ class Controller(QMainWindow,Ui_MainWindow):
             self.func.setPswBooksList()
             # 获取最新的PswBooksManageVer
             self.PswBooksManageVer = self.filemodel.getPswBooksManage()
-
-
-
         pass
         dialog.destroy()
 
@@ -131,11 +148,13 @@ class Controller(QMainWindow,Ui_MainWindow):
         pass
 
     def SelectAllPasswordBooks(self):
-        self.func.setSelectAllOrUnselectAll(self.PswBooksList,1)
+        if self.PswBooksList.count() > 0:
+            self.func.setSelectAllOrUnselectAll(self.PswBooksList,1)
         pass
 
     def ClearAllSelectedPasswordBooks(self):
-        self.func.setSelectAllOrUnselectAll(self.PswBooksList, 0)
+        if self.PswBooksList.count() > 0:
+            self.func.setSelectAllOrUnselectAll(self.PswBooksList, 0)
         pass
 
     def ExportExcel(self):
@@ -143,26 +162,98 @@ class Controller(QMainWindow,Ui_MainWindow):
 
     # 为搜索定义Button函数
     def SearchPsw(self):
+        searchKey = self.SearchInput.text()
+        if self.PswBooksList.count() > 0:
+            booksLen = self.PswBooksList.count()
+            for i in range(booksLen):
+                item = self.PswBooksList.item(i)
+                booksName = item.text()
+                if booksName.find(searchKey):
+                    item.setSelected(True)
+        if self.CurOpenPswBookName != '' and self.PswList.count() > 0:
+            pswLen = self.PswList.count()
+            for i in range(pswLen):
+                item = self.PswList.item(i)
+                pswName = item.text()
+                # print pswName
+                if pswName.find(searchKey):
+                    item.setSelected(True)
         pass
 
     def SearchInputClear(self):
+        self.SearchInput.setText('')
+        if self.PswBooksList.count() > 0:
+            booksLen = self.PswBooksList.count()
+            for i in range(booksLen):
+                item = self.PswBooksList.item(i)
+                if item.isSelected():
+                    item.setSelected(False)
+        if self.CurOpenPswBookName != '' and self.PswList.count() > 0:
+            pswLen = self.PswList.count()
+            for i in range(pswLen):
+                item = self.PswList.item(i)
+                if item.isSelected():
+                    item.setSelected(False)
         pass
 
 
     # 为password定义函数
     def SelectAllPassword(self):
+        if self.PswList.count() > 0:
+            self.func.setSelectAllOrUnselectAll(self.PswList, 1)
         pass
 
     def ClearAllSelectedPassword(self):
+        if self.PswList.count() > 0:
+            self.func.setSelectAllOrUnselectAll(self.PswList, 0)
         pass
 
     def CloseCurPasswordBooks(self):
+        # 关闭前将最新数据写入文件
+        if self.CurOpenPswBookNameMD5 != '':
+            self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+        self.PasswordDictVer = {}
+        self.CurOpenPswBookName = ''
+        self.CurOpenPswBookNameMD5 = ''
+        self.PswList.clear()
+        self.PswBooksCloseBtn.setEnabled(False)
+        self.AddPswBtn.setEnabled(False)
+        QtWidgets.QMessageBox.information(self,u'提示', u'密码本关闭成功')
         pass
 
     def AddPassword(self):
+        dialog = AddPasswordDialog(u'添加新密码项', self.PasswordDictVer)
+        if dialog.exec_():
+            addData =  dialog.getData()
+            self.PasswordDictVer[(addData[0], addData[1])] = addData[2]
+            if self.CurOpenPswBookNameMD5 != '':
+                self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+            self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
+            self.func.setPswListByData(self.PasswordDictVer)
+            pass
+        dialog.destroy()
         pass
 
-    def DeletePassword(self):
+    def DeleteSelectedPassword(self):
+        selectedList = self.func.getCheckedItems(self.PswList)
+        keyList = funclibs.transToDictKey(selectedList)
+        self.__deletePassword(keyList)
+        pass
+
+    def __deletePassword(self,keyList):
+        if keyList is None:
+            QtWidgets.QMessageBox.information(self,u'错误',u'没有待删除的密码项')
+        else:
+            cnt = 0
+            for k in keyList:
+                if len(k) == 2:
+                    if self.PasswordDictVer.has_key((k[0],k[1])):
+                        self.PasswordDictVer.pop((k[0],k[1]))
+                        cnt += 1
+            self.filemodel.setPswBooks(self.PasswordDictVer,self.CurOpenPswBookNameMD5)
+            self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
+            self.func.setPswListByData(self.PasswordDictVer)
+            QtWidgets.QMessageBox.information(self,u'提示',u'成功删除' + str(cnt) + u'个密码项')
         pass
 
     # # 为PswBooksList添加单击，双击事件
@@ -200,18 +291,32 @@ class Controller(QMainWindow,Ui_MainWindow):
 
     def OpenPswBooksListItem(self):
         item = self.PswBooksList.currentItem()
-        dialog = QtWidgets.QInputDialog()
         pswBooksName = item.text()
-        text, ok = dialog.getText(self, u'输入密码', u'请输入' + pswBooksName + u'的密码', QtWidgets.QLineEdit.Password)
-        if ok:
-            if funclibs.getMD5(text) != self.PswBooksManageVer[pswBooksName][0]:
-                QtWidgets.QMessageBox.information(self, u'错误', u'输入' + pswBooksName + u'的密码错误')
-            else:
-                pswData = self.filemodel.getPswBook(funclibs.getMD5(pswBooksName))
-                if pswData is not None:
-                    QtWidgets.QMessageBox.information(self, u'正确', u'输入' + pswBooksName + u'的密码正确')
+        if self.filemodel.pswFileExist(funclibs.getMD5(pswBooksName)):
+            dialog = QtWidgets.QInputDialog()
+            text, ok = dialog.getText(self, u'输入密码', u'请输入(' + pswBooksName + u')的开启密码', QtWidgets.QLineEdit.Password)
+            if ok:
+                if funclibs.getMD5(text) != self.PswBooksManageVer[pswBooksName][0]:
+                    QtWidgets.QMessageBox.information(self, u'错误', u'输入(' + pswBooksName + u')的密码错误')
                 else:
-                    QtWidgets.QMessageBox.information(self, u'错误', pswBooksName + u'的密码文件不存在')
+                    pswData = self.filemodel.getPswBook(funclibs.getMD5(pswBooksName))
+                    if pswData is not None:
+                        # QtWidgets.QMessageBox.information(self, u'正确', u'输入(' + pswBooksName + u')的密码正确')
+                        self.PasswordDictVer = self.filemodel.getPswBook(funclibs.getMD5(pswBooksName))
+                        self.CurOpenPswBookName = pswBooksName
+                        self.CurOpenPswBookNameMD5 = funclibs.getMD5(pswBooksName)
+                        if self.PasswordDictVer is not None:
+                            self.PswBooksCloseBtn.setEnabled(True)
+                            self.AddPswBtn.setEnabled(True)
+                            self.func.setPswListByData(self.PasswordDictVer)
+                            # QtWidgets.QMessageBox.information(self, u'打开', u'打开密码本(' + pswBooksName + u')成功')
+                        else:
+                            self.PasswordDictVer = {}
+                            QtWidgets.QMessageBox.information(self, u'错误', u'打开密码本(' + pswBooksName + u')错误')
+                    else:
+                        QtWidgets.QMessageBox.information(self, u'错误', u'密码本(' + pswBooksName + u')的密码文件不存在')
+        else:
+            QtWidgets.QMessageBox.information(self, u'错误', u'密码本(' + pswBooksName + u')的密码文件不存在')
         pass
 
     def EditPswBooksListItemName(self):
@@ -242,7 +347,7 @@ class Controller(QMainWindow,Ui_MainWindow):
                     self.PswBooksManageVer[pswBooksNameNew] =newVal
                     # 删除掉原来的名字对应的信息
                     self.PswBooksManageVer.pop(pswBooksNameOld)
-                    
+
                     self.filemodel.setPswBooksManage(self.PswBooksManageVer)
                     self.func.setPswBooksList()
                     self.PswBooksManageVer = self.filemodel.getPswBooksManage()
@@ -260,6 +365,7 @@ class Controller(QMainWindow,Ui_MainWindow):
             self.PswBooksManageVer = self.filemodel.getPswBooksManage()
             self.func.setPswBooksList()
             QtWidgets.QMessageBox.information(self, u'提示',u'修改(' + bkName + u')的开启密码成功')
+        dialog.destroy()
         pass
 
     def DeletePswBooksListItem(self):
@@ -278,6 +384,84 @@ class Controller(QMainWindow,Ui_MainWindow):
             self.func.setPswBooksList()
             self.PswBooksManageVer = bookmanageTemp.copy()
         pass
-    # # 为PswList添加单机双击事件
+    # # 为PswList添加单击双击事件
+    def PswListClick(self):
+        item = self.PswList.currentItem()
+        if item is not None:
+            item.setCheckState(QtCore.Qt.Checked if item.checkState() == QtCore.Qt.Unchecked else QtCore.Qt.Unchecked)
+        pass
 
+    def PswListDouClick(self):
+        item = self.PswList.currentItem()
+        # 防止双击更改item的状态
+        if item is not None:
+            state = item.checkState()
+            item.setCheckState(QtCore.Qt.Unchecked if state == QtCore.Qt.Checked else QtCore.Qt.Checked)
+            self.OpenPswListItem()
+        pass
     # # 为PswList添加右键菜单
+    def PswListContext(self,point):
+        listItemMenu = QtWidgets.QMenu()
+        if QtWidgets.QListWidget.itemAt(self.PswList, point) != None:
+            openAction = QtWidgets.QAction(u'打开', self.PswList)
+            openAction.triggered.connect(self.OpenPswListItem)
+            listItemMenu.addAction(openAction)
+            editAction = QtWidgets.QAction(u'修改', self.PswList)
+            editAction.triggered.connect(self.EditPswListItem)
+            listItemMenu.addAction(editAction)
+            deleteAction = QtWidgets.QAction(u'删除', self.PswList)
+            deleteAction.triggered.connect(self.DeletePswListItem)
+            listItemMenu.addAction(deleteAction)
+        listItemMenu.exec_(QtGui.QCursor.pos())
+        pass
+
+    def OpenPswListItem(self):
+        item = self.PswList.currentItem()
+        key = funclibs.transStrToDictKey(item.text())
+        if key is not None:
+            initdata = key
+            if self.PasswordDictVer.has_key((key[0], key[1])):
+                initdata.append(self.PasswordDictVer[(key[0], key[1])])
+                print initdata
+                dialog = OpenPasswordDialog(u'打开密码项', initdata)
+                if dialog.exec_():
+                    pass
+                dialog.destroy()
+            else:
+                QtWidgets.QMessageBox.information(self, u'错误', '(' + key[0] + ',' + key[1] + ')' + u'该密码项不存在')
+        else:
+            QtWidgets.QMessageBox.information(self, u'错误', u'键值转码失败')
+        pass
+
+    def EditPswListItem(self):
+        item = self.PswList.currentItem()
+        key = funclibs.transStrToDictKey(item.text())
+        if key is not None:
+            initdata = key
+            if self.PasswordDictVer.has_key((key[0], key[1])):
+                initdata.append(self.PasswordDictVer[(key[0],key[1])])
+                # print initdata
+                dialog = EditPasswordDialog(u'修改密码项',self.PasswordDictVer, initdata)
+                if dialog.exec_():
+                    editData = dialog.getData()
+                    # 修改原则：既然点击了修改，原来的数据都要删除，然后插入新的数据
+                    self.PasswordDictVer.pop((key[0], key[1]))
+                    self.PasswordDictVer[(editData[0], editData[1])] = editData[2]
+                    if self.CurOpenPswBookNameMD5 != '':
+                        self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+                    self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
+                    self.func.setPswListByData(self.PasswordDictVer)
+                    pass
+                dialog.destroy()
+            else:
+                QtWidgets.QMessageBox.information(self, u'错误', '('+ key[0] + ',' + key[1] +')'+u'该密码项不存在')
+        else:
+            QtWidgets.QMessageBox.information(self, u'错误', u'键值转码失败')
+        pass
+
+    def DeletePswListItem(self):
+        item = self.PswList.currentItem()
+        itemName = item.text()
+        key = funclibs.transToDictKey(itemName)
+        self.__deletePassword(key)
+        pass

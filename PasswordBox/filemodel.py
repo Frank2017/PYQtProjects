@@ -134,6 +134,12 @@ class FileModel:
         else:
             return -1
 
+    def pswFileExist(self,fname):
+        return os.path.exists(os.path.join(self.PSWBOOKSDIR, fname))
+
+    def manageFileExist(self,fname):
+        return os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSMANAGENAME))
+
 if __name__ == '__main__':
     file = FileModel()
     # dict = {'liulei':'male','hah':'female'}
@@ -142,4 +148,4 @@ if __name__ == '__main__':
     # file.setPswBooks(dict2, funclibs.getMD5('密码本一'))
     # print file.getPswBooksManage()
     # print file.getPswBook(funclibs.getMD5('密码本一'))
-    print file.__read()
+    # print file.__read()

@@ -11,9 +11,32 @@ def getMD5(str):
     :return: 加密后字符串
     """
     m = hashlib.md5()
-    m.update(str)
+    m.update(str.encode("UTF-8"))
     return m.hexdigest()
     pass
+
+def transToDictKey(data):
+    if isinstance(data, list):
+        keyList = []
+        for dstr in data:
+            result = transStrToDictKey(dstr)
+            if result is not None:
+                keyList.append(result)
+        return keyList
+    else:
+        return [transStrToDictKey(data)]
+
+    return None
+    pass
+
+def transStrToDictKey(str):
+    result = str.split('<-*-*-*-*-*-*->')
+    # 如果处理的结果不是两个返回None
+    if len(result) < 2:
+        return None
+    return result
+    pass
+
 
 class FuncLibs:
     def __init__(self, controller):
@@ -52,4 +75,27 @@ class FuncLibs:
                 if item.checkState() == QtCore.Qt.Checked:
                     delList.append(item.text())
             return delList
+        pass
+
+    def setPswListByData(self, data):
+        self.controller.PswList.clear()
+        keyList = data.keys()
+        index = 0
+        for it in keyList:
+            textstr = it[0] + '<-*-*-*-*-*-*->' + it[1]
+            item = QtWidgets.QListWidgetItem(self.controller.tr(textstr))
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.controller.PswList.insertItem(index, item)
+            index += 1
+        pass
+        pass
+
+    def setPswListByFileName(self, fname):
+        fnameMD5 = getMD5(fname)
+        data = self.controller.filemodel.getPswBook(fnameMD5)
+        if data is not None:
+            self.setPswListByData(data)
+        else:
+            QtWidgets.QMessageBox.information(self,u'错误',u'打开密码本（'+fname+u')失败')
         pass
