@@ -11,20 +11,25 @@ class FileModel:
         # 密码本所在的文件夹路径，程序所在目录下新建PswBooksDB文件夹
         self.PSWBOOKSDIR = os.path.join(self.CUR_DIR,'PswBooksDB')
         # 密码本管理文件的文件名
-        self.PSWBOOKSNAME = 'pswbooks'
+        self.PSWBOOKSMANAGENAME = 'pswbooks'
+
+        pass
+    def initModel(self):
         # 初始化密码管理文件
         self.__initPswBooksManage()
         # 密码本管理文件读取
-        self.PswBooksDict = self.__read(self.PSWBOOKSNAME,self.CUR_DIR)
+        self.PswBooksDict = self.__read(self.PSWBOOKSMANAGENAME, self.CUR_DIR)
+        if self.PswBooksDict is None:
+            return 0
         # 初始化密码本库文件夹
         self.__initPswBooksDir()
+        return 1
         pass
-
     def __initPswBooksManage(self):
         # 如果文件不存在先写入密码本管理文件
-        if not os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSNAME)):
+        if not os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSMANAGENAME)):
             Dict = {}
-            self.__write(Dict, self.PSWBOOKSNAME, self.CUR_DIR)
+            self.__write(Dict, self.PSWBOOKSMANAGENAME, self.CUR_DIR)
         pass
 
     def __initPswBooksDir(self):
@@ -41,9 +46,12 @@ class FileModel:
         :return: 返回读取的dict对象
         """
         file = os.path.join(path, name)
-        with open(file, 'r') as fp:
+        try:
+            fp = open(file, 'r')
             data = cPickle.load(fp)
-        return data
+            return data
+        except:
+            return None
         pass
 
     def __write(self,data,fname,path):
@@ -54,14 +62,17 @@ class FileModel:
         :param path: 写入文件的路径
         """
         file = os.path.join(path, fname)
-        with open(file, 'w') as fp:
+        try:
+            fp = open(file, 'w')
             cPickle.dump(data, fp)
+        except:
+            return None
         pass
 
     def setPswBooksManage(self,data):
-        if not os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSNAME)):
+        if not os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSMANAGENAME)):
             self.__initPswBooksManage()
-        self.__write(data,self.PSWBOOKSNAME,self.CUR_DIR)
+        self.__write(data,self.PSWBOOKSMANAGENAME,self.CUR_DIR)
         pass
 
     def setPswBooks(self,data,fname):
@@ -75,7 +86,10 @@ class FileModel:
         获取密码本管理文件（外部使用接口）
         :return: 返回密码本管理文件dict对象
         """
-        return self.__read(self.PSWBOOKSNAME,self.CUR_DIR)
+        if os.path.exists(os.path.join(self.CUR_DIR, self.PSWBOOKSMANAGENAME)):
+            return self.__read(self.PSWBOOKSMANAGENAME,self.CUR_DIR)
+        else:
+            return None
 
     def getPswBook(self,fname):
         """
@@ -88,12 +102,44 @@ class FileModel:
             return self.__read(fname,self.PSWBOOKSDIR)
         else:
             return None
+        pass
+    
+    def removePswFile(self, fname):
+        fpath = os.path.join(self.PSWBOOKSDIR, fname)
+        if os.path.exists(fpath):
+            os.remove(fpath)
+            return 1
+        else:
+            # 删除失败
+            if os.path.exists(fpath):
+                return 0
+            # 文件不存在
+            else:
+                return -1
+        pass
+
+    def renamePswFile(self, oldName, newName):
+        oldFile = os.path.join(self.PSWBOOKSDIR, oldName)
+        newFile = os.path.join(self.PSWBOOKSDIR, newName)
+        if os.path.exists(oldFile):
+            # 新命名的文件存在
+            if os.path.exists(newFile):
+                return -2
+            else:
+                try:
+                    os.rename(oldFile, newFile)
+                    return 1
+                except:
+                    return 0
+        else:
+            return -1
 
 if __name__ == '__main__':
     file = FileModel()
-    dict = {'liulei':'male','hah':'female'}
-    file.setPswBooksManage(dict)
-    dict2 = {'liulei':'male','hah':'female', 'lala':'fuck'}
-    file.setPswBooks(dict2, funclibs.getMD5('密码本一'))
-    print file.getPswBooksManage()
-    print file.getPswBook(funclibs.getMD5('密码本一'))
+    # dict = {'liulei':'male','hah':'female'}
+    # file.setPswBooksManage(dict)
+    # dict2 = {'liulei':'male','hah':'female', 'lala':'fuck'}
+    # file.setPswBooks(dict2, funclibs.getMD5('密码本一'))
+    # print file.getPswBooksManage()
+    # print file.getPswBook(funclibs.getMD5('密码本一'))
+    print file.__read()
