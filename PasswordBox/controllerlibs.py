@@ -1,12 +1,16 @@
 # coding=UTF-8
 import sys
+import os
+import filemodel as FM
+import funclibs
+import xlwt
 from PyQt5 import QtCore, QtWidgets,QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from ui_MainWindow import Ui_MainWindow
-import filemodel as FM
-import funclibs
+from datetime import datetime
 from redefineModel import *
-
+reload(sys)
+sys.setdefaultencoding('utf8')
 class Controller(QMainWindow,Ui_MainWindow):
     def __init__(self):
         # 初始化父类
@@ -95,7 +99,7 @@ class Controller(QMainWindow,Ui_MainWindow):
             # print temp
             self.PswBooksManageVer[temp[0]] = [funclibs.getMD5(temp[1]), funclibs.getMD5(temp[0])]
             # 建立对应的PswFile
-            self.filemodel.setPswBooks({}, funclibs.getMD5(temp[0]))
+            self.filemodel.setPswBook({}, funclibs.getMD5(temp[0]))
             # 说明文件没有创建成功
             if self.filemodel.getPswBook(funclibs.getMD5(temp[0])) is None:
                 QtWidgets.QMessageBox.information(self, u'错误', u'添加密码本错误')
@@ -158,8 +162,49 @@ class Controller(QMainWindow,Ui_MainWindow):
         pass
 
     def ExportExcel(self):
+        # exportList存储待导出的密码本名称
+        exportList = self.func.getCheckedItems(self.PswBooksList)
+        exportLen = len(exportList)
+        excelObj = xlwt.Workbook()
+        if len(exportList) > 0:
+            filedialog = QtWidgets.QFileDialog()
+            filepath = filedialog.getExistingDirectory(self, u'选择文件夹', os.path.curdir)
+            for eL in exportList:
+                if self.filemodel.pswFileExist(funclibs.getMD5(eL)):
+                    dialog = QtWidgets.QInputDialog()
+                    text, ok = dialog.getText(self, u'输入密码', u'请输入(' + eL + u')的开启密码',QtWidgets.QLineEdit.Password)
+                    if ok:
+                        if funclibs.getMD5(text) != self.PswBooksManageVer[eL][0]:
+                            QtWidgets.QMessageBox.information(self, u'错误', u'输入(' + eL + u')的密码错误')
+                            return
+                        else:
+                            pswBookName = self.PswBooksManageVer[eL][1]
+                            pswBookDict = self.filemodel.getPswBook(pswBookName)
+                            sheet = excelObj.add_sheet(eL,cell_overwrite_ok=True)
+                            miyao = self.PswBooksManageVer[eL][0]
+                            self.__writeSheet(sheet, pswBookDict, miyao)
+                            QtWidgets.QMessageBox.information(self, u'提示' ,eL + u'密码导出成功')
+                    else:
+                        QtWidgets.QMessageBox.information(self, u'提示', u'密码本不存在')
+                pass
+            excelObj.save(os.path.join(filepath,u'密码本-'+str(datetime.today().strftime('%Y%m%d%H%M%S'))+'.xls'))
+
+        else:
+            QtWidgets.QMessageBox.information(self, u'提示' ,u'至少选择一个导出的密码本')
         pass
 
+    def __writeSheet(self,sheet, dict,miyao):
+        dictLen = len(dict)
+        index = 0
+        print dict
+        for (key,val) in sorted(dict.items()):
+            print key
+            print val
+            sheet.write(index, 0, key[0])
+            sheet.write(index, 1, key[1])
+            sheet.write(index, 2, funclibs.pswDecipher(val, miyao))
+            index += 1
+        pass
     # 为搜索定义Button函数
     def SearchPsw(self):
         searchKey = self.SearchInput.text()
@@ -211,7 +256,7 @@ class Controller(QMainWindow,Ui_MainWindow):
     def CloseCurPasswordBooks(self):
         # 关闭前将最新数据写入文件
         if self.CurOpenPswBookNameMD5 != '':
-            self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+            self.filemodel.setPswBook(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
         self.PasswordDictVer = {}
         self.CurOpenPswBookName = ''
         self.CurOpenPswBookNameMD5 = ''
@@ -227,10 +272,12 @@ class Controller(QMainWindow,Ui_MainWindow):
     def AddPassword(self):
         dialog = AddPasswordDialog(u'添加新密码项', self.PasswordDictVer)
         if dialog.exec_():
-            addData =  dialog.getData()
-            self.PasswordDictVer[(addData[0], addData[1])] = addData[2]
+            addData = dialog.getData()
+            # 密码项的格式dict，dict的key是（应用名，用户名），value是加密后的密码
+            key = self.PswBooksManageVer[self.CurOpenPswBookName][0]  # 获取加密秘钥
+            self.PasswordDictVer[(addData[0], addData[1])] = funclibs.pswCipher(addData[2], key)
             if self.CurOpenPswBookNameMD5 != '':
-                self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+                self.filemodel.setPswBook(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
             self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
             self.func.setPswListByData(self.PasswordDictVer)
             pass
@@ -255,7 +302,7 @@ class Controller(QMainWindow,Ui_MainWindow):
                         if self.PasswordDictVer.has_key((k[0],k[1])):
                             self.PasswordDictVer.pop((k[0],k[1]))
                             cnt += 1
-                self.filemodel.setPswBooks(self.PasswordDictVer,self.CurOpenPswBookNameMD5)
+                self.filemodel.setPswBook(self.PasswordDictVer,self.CurOpenPswBookNameMD5)
                 self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
                 self.func.setPswListByData(self.PasswordDictVer)
                 QtWidgets.QMessageBox.information(self,u'提示',u'成功删除' + str(cnt) + u'个密码项')
@@ -429,8 +476,10 @@ class Controller(QMainWindow,Ui_MainWindow):
         if key is not None:
             initdata = key
             if self.PasswordDictVer.has_key((key[0], key[1])):
-                initdata.append(self.PasswordDictVer[(key[0], key[1])])
-                print initdata
+                k = self.PswBooksManageVer[self.CurOpenPswBookName][0]  # 获取加密秘钥
+                # print self.PasswordDictVer[(key[0], key[1])]
+                initdata.append(funclibs.pswDecipher(self.PasswordDictVer[(key[0], key[1])], k))
+                # print initdata
                 dialog = OpenPasswordDialog(u'打开密码项', initdata)
                 if dialog.exec_():
                     pass
@@ -447,16 +496,18 @@ class Controller(QMainWindow,Ui_MainWindow):
         if key is not None:
             initdata = key
             if self.PasswordDictVer.has_key((key[0], key[1])):
-                initdata.append(self.PasswordDictVer[(key[0],key[1])])
+                k = self.PswBooksManageVer[self.CurOpenPswBookName][0]  # 获取加密秘钥
+                initdata.append(funclibs.pswDecipher(self.PasswordDictVer[(key[0],key[1])], k))
                 # print initdata
                 dialog = EditPasswordDialog(u'修改密码项',self.PasswordDictVer, initdata)
                 if dialog.exec_():
                     editData = dialog.getData()
                     # 修改原则：既然点击了修改，原来的数据都要删除，然后插入新的数据
                     self.PasswordDictVer.pop((key[0], key[1]))
-                    self.PasswordDictVer[(editData[0], editData[1])] = editData[2]
+                    miyao = self.PswBooksManageVer[self.CurOpenPswBookName][0]  # 获取加密秘钥
+                    self.PasswordDictVer[(editData[0], editData[1])] = funclibs.pswCipher(editData[2], miyao)
                     if self.CurOpenPswBookNameMD5 != '':
-                        self.filemodel.setPswBooks(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
+                        self.filemodel.setPswBook(self.PasswordDictVer, self.CurOpenPswBookNameMD5)
                     self.PasswordDictVer = self.filemodel.getPswBook(self.CurOpenPswBookNameMD5)
                     self.func.setPswListByData(self.PasswordDictVer)
                     pass
