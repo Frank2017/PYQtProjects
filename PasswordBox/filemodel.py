@@ -75,7 +75,7 @@ class FileModel:
         self.__write(data,self.PSWBOOKSMANAGENAME,self.CUR_DIR)
         pass
 
-    def setPswBooks(self,data,fname):
+    def setPswBook(self,data,fname):
         if not os.path.exists(self.PSWBOOKSDIR):
             self.__initPswBooksDir()
         self.__write(data, fname, self.PSWBOOKSDIR)

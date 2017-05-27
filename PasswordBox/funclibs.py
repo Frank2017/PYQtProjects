@@ -1,6 +1,8 @@
 # coding=UTF-8
 import hashlib
 from PyQt5 import QtCore, QtWidgets,QtGui
+from Crypto.Cipher import AES
+from binascii import b2a_hex,a2b_hex
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
 
@@ -13,6 +15,24 @@ def getMD5(str):
     m = hashlib.md5()
     m.update(str.encode("UTF-8"))
     return m.hexdigest()
+    pass
+
+def pswCipher(text,key):
+    iv = (key.__str__())[0:16]
+    text = text.encode("UTF-8")
+    paddinglen = 16 - len(text) % 16
+    text += '\0' * paddinglen
+    cipher = AES.new(key,AES.MODE_CBC,iv)
+    msg = b2a_hex(cipher.encrypt(text))
+    return msg
+    pass
+
+def pswDecipher(ciphertext,key):
+    iv = (key.__str__())[0:16]
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    msg = cipher.decrypt(a2b_hex(ciphertext))
+    msg = msg.replace('\0','')
+    return msg
     pass
 
 def transToDictKey(data):
