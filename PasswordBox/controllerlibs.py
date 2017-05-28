@@ -4,15 +4,18 @@ import os
 import filemodel as FM
 import funclibs
 import xlwt
+import xlrd
 from PyQt5 import QtCore, QtWidgets,QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from ui_MainWindow import Ui_MainWindow
 from datetime import datetime
 from redefineModel import *
-reload(sys)
-sys.setdefaultencoding('utf8')
+
+
 class Controller(QMainWindow,Ui_MainWindow):
     def __init__(self):
+
+        # print
         # 初始化父类
         super(Controller, self).__init__()
         #初始化UI界面
@@ -85,6 +88,92 @@ class Controller(QMainWindow,Ui_MainWindow):
 
     # 为menu 定义action
     def ImportExcelMenuFunc(self):
+        if self.CurOpenPswBookName != '':
+            self.CloseCurPasswordBooks()
+        QtWidgets.QMessageBox.information(self, u'提示',u'确保导入的电子表格文件仅存在三列内容，且按照应用名，用户名，密码的顺序排列（超出三列部分将不进行存储）')
+        filedialog = QtWidgets.QFileDialog()
+        filepath, filetype = filedialog.getOpenFileName(self, u'打开待导入文件', os.path.curdir, 'Excel 97-2003 工作簿(*.xls);;Excel 工作簿(*.xlsx)')
+        if filepath != '':
+            pswBooks = self.__readExcel(filepath)
+            index = 0
+            if pswBooks is not None:
+                # 导入如果密码本存在，不弹出新建窗口，直接和之前的密码本合并，覆盖原始资料
+                # 导入密码本如果不存在，弹出新建窗口，添加密码本
+                for bookname in pswBooks.keys():
+                    # 导入密码本存在
+                    if self.PswBooksManageVer.has_key(bookname):
+                        bookNameMd5 = self.PswBooksManageVer[bookname][1]
+                        key = self.PswBooksManageVer[bookname][0]
+                        dictTemp = funclibs.pswDictCipher(pswBooks[bookname], key)
+                        bookDictOri = self.filemodel.getPswBook(bookNameMd5)
+                        bookDictOri.update(dictTemp)
+                        self.filemodel.setPswBook(bookDictOri,bookNameMd5)
+                        index += 1
+                        pass
+                    # 导入密码本不存在
+                    else:
+                        dialog = AddExortBookPswDialog(u'添加密码本', self.PswBooksManageVer, bookname)
+                        # print pswBooks[bookname]
+                        if dialog.exec_():
+                            temp = dialog.getData()
+                            # print temp
+                            # print self.PswBooksManageVer
+                            self.PswBooksManageVer[bookname] = [funclibs.getMD5(temp[1]), funclibs.getMD5(temp[0])]
+                            self.filemodel.setPswBooksManage(self.PswBooksManageVer)
+                            self.PswBooksManageVer = self.filemodel.getPswBooksManage()
+                            self.func.setPswBooksList()
+                            # print self.PswBooksManageVer
+                            key = funclibs.getMD5(temp[1])
+                            dictTemp = funclibs.pswDictCipher(pswBooks[bookname], key)  # 加密后的密码本dict
+                            self.filemodel.setPswBook(dictTemp, funclibs.getMD5(temp[0]))
+                            # print dictTemp
+                            index += 1
+                            pass
+                        dialog.destroy()
+                QtWidgets.QMessageBox.information(self, u'提示', u'成功导入' + str(index) + u'个密码本')
+            else:
+                QtWidgets.QMessageBox.information(self, u'提示', u'读入excel文件内容为空')
+        else:
+            QtWidgets.QMessageBox.information(self, u'提示', u'导入0个密码本')
+            pass
+
+    def __readExcel(self,filepath):
+        """
+        :param filepath: 待读入excel的文件路径
+        :return: dict，{密码本名1（sheet1名）：dict（密码本），密码本名2（sheet2名）：dict（密码本）...}
+        """
+        excelobj = xlrd.open_workbook(filepath, logfile= 'utf-8')
+        sheetList = excelobj.sheet_names()
+        if len(sheetList) > 0:
+            dict = {}
+            for sheetname in sorted(sheetList):
+                sheet = excelobj.sheet_by_name(sheetname)
+                for i in range(sheet.nrows):
+                    temp = sheet.row_values(i)
+                    # print temp
+                    # print type(temp[0])
+                    # print type(temp[1])
+                    # print type(temp[2])
+                    if len(temp) < 3:
+                        QtWidgets.QMessageBox.information(self, u'提示', u'导入密码本（' + sheetname + u'）列数小于3')
+                        continue
+                    dict[sheetname] = {}
+                    for k in range(len(temp)):
+                        if not isinstance(temp[k], unicode):
+                            if isinstance(temp[k], (float,int)):
+                                temp[k] = unicode(int(temp[k]).__str__(), 'utf-8')
+                    # print type(temp[0])
+                    # print type(temp[1])
+                    # print type(temp[2])
+                    # print temp
+                    dict[sheetname][(temp[0],temp[1])] = temp[2]
+            # for key in sorted(dict):
+            #     print key
+            #     for k,val in dict[key].items():
+            #         print key,k,val
+            return dict
+        else:
+            return None
         pass
 
     # 为PasswordBooks定义Button函数
@@ -165,7 +254,8 @@ class Controller(QMainWindow,Ui_MainWindow):
         # exportList存储待导出的密码本名称
         exportList = self.func.getCheckedItems(self.PswBooksList)
         exportLen = len(exportList)
-        excelObj = xlwt.Workbook()
+        # 设置编码格式为utf8，防止中文存储报错
+        excelObj = xlwt.Workbook(encoding='utf-8')
         if len(exportList) > 0:
             filedialog = QtWidgets.QFileDialog()
             filepath = filedialog.getExistingDirectory(self, u'选择文件夹', os.path.curdir)
@@ -188,7 +278,6 @@ class Controller(QMainWindow,Ui_MainWindow):
                         QtWidgets.QMessageBox.information(self, u'提示', u'密码本不存在')
                 pass
             excelObj.save(os.path.join(filepath,u'密码本-'+str(datetime.today().strftime('%Y%m%d%H%M%S'))+'.xls'))
-
         else:
             QtWidgets.QMessageBox.information(self, u'提示' ,u'至少选择一个导出的密码本')
         pass
@@ -196,10 +285,7 @@ class Controller(QMainWindow,Ui_MainWindow):
     def __writeSheet(self,sheet, dict,miyao):
         dictLen = len(dict)
         index = 0
-        print dict
         for (key,val) in sorted(dict.items()):
-            print key
-            print val
             sheet.write(index, 0, key[0])
             sheet.write(index, 1, key[1])
             sheet.write(index, 2, funclibs.pswDecipher(val, miyao))
@@ -344,6 +430,8 @@ class Controller(QMainWindow,Ui_MainWindow):
     def OpenPswBooksListItem(self):
         item = self.PswBooksList.currentItem()
         pswBooksName = item.text()
+        if self.CurOpenPswBookName != '':
+            self.CloseCurPasswordBooks()
         if self.filemodel.pswFileExist(funclibs.getMD5(pswBooksName)):
             dialog = QtWidgets.QInputDialog()
             text, ok = dialog.getText(self, u'输入密码', u'请输入(' + pswBooksName + u')的开启密码', QtWidgets.QLineEdit.Password)
