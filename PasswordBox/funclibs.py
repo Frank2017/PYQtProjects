@@ -116,7 +116,6 @@ class FuncLibs:
             self.controller.PswList.insertItem(index, item)
             index += 1
         pass
-        pass
 
     def setPswListByFileName(self, fname):
         fnameMD5 = getMD5(fname)
