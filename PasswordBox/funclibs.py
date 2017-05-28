@@ -35,6 +35,13 @@ def pswDecipher(ciphertext,key):
     return msg
     pass
 
+def pswDictCipher(dict,key):
+    if len(dict) > 0:
+        for k in dict.keys():
+            dict[k] = pswCipher(dict[k], key)
+        return dict
+    return {}
+
 def transToDictKey(data):
     if isinstance(data, list):
         keyList = []
