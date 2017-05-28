@@ -75,6 +75,27 @@ class AddBookDialog(QtWidgets.QDialog):
         pass
 
 
+class AddExortBookPswDialog(AddBookDialog):
+    def __init__(self, title, data, bookName):
+        super(AddExortBookPswDialog, self).__init__(title, data)
+        self.lePswName.setText(bookName)
+        self.lePswName.setEnabled(False)
+        pass
+
+    def accept(self):
+        super(AddExortBookPswDialog, self).accept()
+        pass
+
+    def reject(self):
+        super(AddExortBookPswDialog, self).reject()
+        pass
+
+    def getData(self):
+        return [self.lePswName.text(), self.lePsw.text()]
+        pass
+
+
+
 class EditBookPswDialog(QtWidgets.QDialog):
     def __init__(self, title, data, bkname, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -222,6 +243,7 @@ class AddPasswordDialog(QtWidgets.QDialog):
     def getData(self):
         return [self.leAppName.text(), self.leUserName.text(), self.lePassword.text()]
         pass
+
 
 class OpenPasswordDialog(AddPasswordDialog):
     def __init__(self, title, initData):
