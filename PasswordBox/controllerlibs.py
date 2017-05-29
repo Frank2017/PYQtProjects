@@ -55,7 +55,7 @@ class Controller(QMainWindow,Ui_MainWindow):
         # 初始化filemodel进行存储
         self.filemodel = FM.FileModel()
         if self.filemodel.initModel() == 0:
-            QtWidgets.QMessageBox.information(u'错误', u'初始化失败')
+            QtWidgets.QMessageBox.information(self, u'错误', u'初始化失败')
             sys.exit(0)
         self.PswBooksManageVer = self.filemodel.getPswBooksManage()
         self.PasswordDictVer = {}
@@ -258,7 +258,7 @@ class Controller(QMainWindow,Ui_MainWindow):
         excelObj = xlwt.Workbook(encoding='utf-8')
         if len(exportList) > 0:
             filedialog = QtWidgets.QFileDialog()
-            filepath = filedialog.getExistingDirectory(self, u'选择文件夹', os.path.curdir)
+            filepath = filedialog.getExistingDirectory(self, u'选择文件夹', self.filemodel.CUR_DIR)
             for eL in exportList:
                 if self.filemodel.pswFileExist(funclibs.getMD5(eL)):
                     dialog = QtWidgets.QInputDialog()
