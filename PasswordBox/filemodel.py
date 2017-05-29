@@ -7,7 +7,10 @@ import funclibs
 class FileModel:
     def __init__(self):
         # 运行程序的当前路径
-        self.CUR_DIR = os.path.curdir
+        if getattr(sys, 'frozen', False):
+            self.CUR_DIR = os.path.dirname(sys.executable)
+        else:
+            self.CUR_DIR = os.path.dirname(__file__)
         # 密码本所在的文件夹路径，程序所在目录下新建PswBooksDB文件夹
         self.PSWBOOKSDIR = os.path.join(self.CUR_DIR,'PswBooksDB')
         # 密码本管理文件的文件名
